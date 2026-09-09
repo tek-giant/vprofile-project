@@ -50,20 +50,28 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool env.SONARSCANNER
+                    def sonarJavaHome = tool 'JDK11'
 
                     withSonarQubeEnv(env.SONARSERVER) {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                              -Dsonar.projectKey=vprofile \
-                              -Dsonar.projectName=vprofile \
-                              -Dsonar.projectVersion=1.0 \
-                              -Dsonar.sources=src/main \
-                              -Dsonar.tests=src/test \
-                              -Dsonar.java.binaries=target/classes \
-                              -Dsonar.junit.reportPaths=target/surefire-reports \
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-                              -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
-                        """
+                        withEnv([
+                            "JAVA_HOME=${sonarJavaHome}",
+                            "PATH+SONARJAVA=${sonarJavaHome}/bin"
+                        ]) {
+                            sh """
+                                java -version
+
+                                ${scannerHome}/bin/sonar-scanner \
+                                  -Dsonar.projectKey=vprofile \
+                                  -Dsonar.projectName=vprofile \
+                                  -Dsonar.projectVersion=1.0 \
+                                  -Dsonar.sources=src/main \
+                                  -Dsonar.tests=src/test \
+                                  -Dsonar.java.binaries=target/classes \
+                                  -Dsonar.junit.reportPaths=target/surefire-reports \
+                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                                  -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
+                            """
+                        }
                     }
                 }
             }
