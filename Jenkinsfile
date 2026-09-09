@@ -55,12 +55,13 @@ pipeline {
                     withSonarQubeEnv(env.SONARSERVER) {
                         withEnv([
                             "JAVA_HOME=${sonarJavaHome}",
-                            "PATH+SONARJAVA=${sonarJavaHome}/bin"
+                            "PATH+SONARJAVA=${sonarJavaHome}/bin",
+                            "SCANNER_HOME=${scannerHome}"
                         ]) {
-                            sh """
+                            sh '''
                                 java -version
 
-                                ${scannerHome}/bin/sonar-scanner \
+                                $SCANNER_HOME/bin/sonar-scanner \
                                   -Dsonar.projectKey=vprofile \
                                   -Dsonar.projectName=vprofile \
                                   -Dsonar.projectVersion=1.0 \
@@ -70,41 +71,41 @@ pipeline {
                                   -Dsonar.junit.reportPaths=target/surefire-reports \
                                   -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
                                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
-                            """
+                            '''
                         }
                     }
                 }
             }
         }
-        stage("Quality Gate") {
+
+        stage('Quality Gate') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
-                    // Parameter indicates whether to set pipeline to UNSTABLE
-                    // true = set pipeline to UNSTABLE, false = don't
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage("UploadArtifact") {
-            steps{
+        stage('Upload Artifact') {
+            steps {
                 nexusArtifactUploader(
-                  nexusVersion: 'nexus3',
-                  protocol: 'http',
-                  nexusUrl: '${NEXUSIP}:${NEXUSPORT}',
-                  groupId: 'QA',
-                  version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}",
-                  repository: "${RELEASE_REPO}",
-                  credentialsId: "${NEXUS_LOGIN}",
-                  artifacts: [
-                    [artifactId: 'vproapp',
-                    classifier: '',
-                    file: 'target/vprofile-v2.war',
-                    type: 'war']
-               ]
-               )
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${env.NEXUSIP}:${env.NEXUSPORT}",
+                    groupId: 'QA',
+                    version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}",
+                    repository: env.RELEASE_REPO,
+                    credentialsId: env.NEXUS_LOGIN,
+                    artifacts: [
+                        [
+                            artifactId: 'vproapp',
+                            classifier: '',
+                            file: 'target/vprofile-v2.war',
+                            type: 'war'
+                        ]
+                    ]
+                )
             }
         }
     }
 }
-
