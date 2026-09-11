@@ -50,7 +50,7 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool env.SONARSCANNER
-                    def sonarJavaHome = tool 'JDK11'
+                    def sonarJavaHome = tool 'JDK17'
 
                     withSonarQubeEnv(env.SONARSERVER) {
                         withEnv([
